@@ -7,14 +7,13 @@ EwModules(Service)
 ]]--
 
 local RunService = game:GetService("RunService")
-local IsServer = RunService:IsServer()
 
 local ServerScriptService = game:GetService("ServerScriptService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 function GetService(ServiceName,Location)
 	if ServiceName and Location then
-		if IsServer then
+		if RunService:IsServer() then
 			local Server = Location:FindFirstChild("Server")
 			local Shared = Location:FindFirstChild("Shared")
 			
@@ -28,7 +27,7 @@ function GetService(ServiceName,Location)
 					return require(Shared:FindFirstChild(ServiceName):FindFirstChild(ServiceName) or Shared:FindFirstChild(ServiceName):FindFirstChildOfClass("ModuleScript")) or nil
 				end
 			end
-		else
+		elseif RunService:IsClient() then
 			local Client = Location:FindFirstChild("Client")
 			local Shared = Location:FindFirstChild("Shared")
 
@@ -42,6 +41,8 @@ function GetService(ServiceName,Location)
 					return require(Shared:FindFirstChild(ServiceName):FindFirstChild(ServiceName) or Shared:FindFirstChild(ServiceName):FindFirstChildOfClass("ModuleScript")) or nil
 				end
 			end
+		else
+			return error("Unknown state.")
 		end
 	end
 	
@@ -49,13 +50,15 @@ function GetService(ServiceName,Location)
 end
 
 return function(ServiceName)
-	if IsServer then
+	if RunService:IsServer() then
 		local EwModules = ServerScriptService:FindFirstChild("EwModules")
 		return GetService(ServiceName,EwModules)
-	else
+	elseif RunService:IsClient() then
 		if not game:IsLoaded() then repeat wait() until game:IsLoaded() end
 		
 		local EwModules = ReplicatedStorage:FindFirstChild("EwModules_REPLICATED")
 		return GetService(ServiceName,EwModules)
+	else
+		return error("Unknown state.")
 	end
 end
