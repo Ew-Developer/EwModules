@@ -64,6 +64,7 @@ local function GetAsync(...)
 	elseif Data:find("Http requests are not enabled", 1, true) then
 		OpenGetRequests = OpenGetRequests + 1
 		repeat
+			warn("Http requests are not enabled!")
 			local Success, Data = pcall(HttpService.GetAsync, HttpService, ...)
 		until Success and not Data:find("Http requests are not enabled", 1, true) or not wait(1)
 		OpenGetRequests = 0
