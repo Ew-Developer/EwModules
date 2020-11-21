@@ -82,6 +82,7 @@ local function GetAsync(...)
 end
 
 local function GiveSourceToScript(Link, Script)
+	Script.Source = "-- Loading source..."
 	DataSources[Script] = Link
 	Script.Source = GetAsync(Link)
 end
@@ -253,6 +254,7 @@ function GitHub:Install(Link, Parent, RoutineList)
 		Link = "https://raw.githubusercontent.com/" .. Organization .. "/" .. Repository .. "/" .. (Tree or "master") .. Directory
 		local Source = GetAsync(Link)
 		local Script = GetFirstChild(Parent and not RoutineList and Repository ~= ScriptName and Parent.Name ~= ScriptName and Parent.Name ~= Repository and GetFirstChild(Parent, Repository, "Folder") or Parent, ScriptName:gsub("Library$", "", 1):gsub("%%(%x%x)", UrlDecode), ScriptTypes[ScriptClass or "mod"] or "ModuleScript")
+		Script.Source = "-- Loading source..."
 		DataSources[Script] = Link
 		if not Routines[1] then Routines[1] = Script end
 		Script.Source = Source
