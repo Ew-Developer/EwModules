@@ -306,6 +306,12 @@ local RepositoriesToInstall = {
 		"https://github.com/Ew-Developer/EwModules/tree/main/Modules";
 		game:GetService("ServerScriptService");
 		function(Installed)
+			repeat
+				if game:GetService("ReplicatedStorage"):FindFirstChild("EwModules_REPLICATED") then
+					game:GetService("ReplicatedStorage"):FindFirstChild("EwModules_REPLICATED"):Destroy()
+				end
+			until not game:GetService("ReplicatedStorage"):FindFirstChild("EwModules_REPLICATED")
+			
 			local Clone = Installed:Clone()
 			Clone:FindFirstChild("Server"):Destroy()
 			Clone.Parent = game:GetService("ReplicatedStorage")
