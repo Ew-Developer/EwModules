@@ -306,6 +306,10 @@ local RepositoriesToInstall = {
 		"https://github.com/Ew-Developer/EwModules/tree/main/Modules";
 		game:GetService("ServerScriptService");
 	};
+	{
+		"https://github.com/Ew-Developer/EwModules/blob/main/EwModules.lua";
+		game:GetService("ReplicatedStorage");
+	};
 }
 
 local ThreadsDone = table.create(#RepositoriesToInstall,false)
