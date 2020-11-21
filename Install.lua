@@ -305,6 +305,12 @@ local RepositoriesToInstall = {
 	{
 		"https://github.com/Ew-Developer/EwModules/tree/main/Modules";
 		game:GetService("ServerScriptService");
+		function(Installed)
+			local Clone = Installed:Clone()
+			Clone:FindFirstChild("Server"):Destroy()
+			Clone.Parent = game:GetService("ReplicatedStorage")
+			Clone.Name = "EwModules_REPLICATED"
+		end;
 	};
 	{
 		"https://github.com/Ew-Developer/EwModules/blob/main/EwModules.lua";
