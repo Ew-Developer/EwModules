@@ -300,7 +300,7 @@ end
 
 local RepositoriesToInstall = {
 	{
-		"https://github.com/Quenty/NevermoreEngine/tree/version2/Modules";
+		"https://github.com/Ew-Developer/EwModules/tree/main/Modules";
 		game:GetService("ServerScriptService");
 	};
 }
