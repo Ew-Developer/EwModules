@@ -35,7 +35,7 @@ function Module:GetAsync(...)
 	elseif Data:find("HttpError: SslConnectFail", 1, true) then
 		local t = math.random(2, 5)
 		
-		warn("HttpError: SslConnectFail error on " .. tostring((...)) .. " trying again in " .. t .. " seconds.")
+		warn("HttpError: SslConnectFail error on "..tostring((...)).." trying again in "..t.." seconds.")
 		
 		wait(t)
 		
