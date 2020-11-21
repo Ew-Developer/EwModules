@@ -306,6 +306,8 @@ local RepositoriesToInstall = {
 		"https://github.com/Ew-Developer/EwModules/tree/main/Modules";
 		game:GetService("ServerScriptService");
 		function(Installed)
+			wait(2.5)
+			
 			local ToClone = game:GetService("ServerScriptService"):FindFirstChild("EwModules")
 			if ToClone then
 				repeat
@@ -325,7 +327,7 @@ local RepositoriesToInstall = {
 					ToClone:FindFirstChild("Client"):Destroy()
 				end
 			end
-		end;
+		end
 	};
 	{
 		"https://github.com/Ew-Developer/EwModules/blob/main/EwModules.lua";
