@@ -4,18 +4,37 @@ if not game:GetService("RunService"):IsStudio() then error("Ew Modules can only 
 if not game:GetService("RunService"):IsEdit() then error("Ew Modules can only be installed in edit mode!") end
 if not game:GetService("RunService"):IsServer() then error("Ew Modules can only be installed on server!") end
 
-local HE = game:GetService("HttpService").HttpEnabled or true
-pcall(function()
-	game:GetService("HttpService").HttpEnabled = true
-end)
-
 local VERSION = "0.0.1"
-warn("Ew Modules v"..VERSION.."\nUsing '"..tostring(_VERSION).."'\nInstalling...")
+warn("Ew Modules v."..VERSION.."\nUsing '"..tostring(_VERSION).."'\nStarting installation...")
 
---// Varibles \\--
+--// Installer \\--
 
+local function GetFirstChild(Parent, Name, Class)
+	if Parent then -- GetFirstChildWithNameOfClass
+		local Objects = Parent:GetChildren()
+		for a = 1, #Objects do
+			local Object = Objects[a]
+			if Object.Name == Name and Object.ClassName == Class then
+				return Object
+			end
+		end
+	end
+
+	local Child = Instance.new(Class)
+	Child.Name = Name
+	Child.Parent = Parent
+	return Child, true
+end
+
+-- Services
 local HttpService = game:GetService("HttpService")
 
+-- Module
+local GitHub = {}
+
+local DataSources = {}
+
+-- Helper Functions
 local ScriptTypes = {
 	[""] = "ModuleScript";
 	["local"] = "LocalScript";
@@ -25,299 +44,254 @@ local ScriptTypes = {
 	["server"] = "Script";
 	["client"] = "LocalScript";
 }
-local DataSources = {}
 
---// Functions \\--
-
-function GetFirstChild(Parent,Name,Class)
-	if Parent then
-		local Objects = Parent:GetChildren()
-		for Index = 1,#Objects do
-			local Object = Objects[Index]
-			if Object and Object.Name == Name and Object.ClassName == Class then
-				return Object
-			end
-		end
-	end
-	
-	local Child = Instance.new(Class,Parent)
-	Child.Name = Name
-	
-	return Child,true
-end
-
-function UrlDecode(Character)
+local function UrlDecode(Character)
 	return string.char(tonumber(Character, 16))
 end
 
 local OpenGetRequests = 0
-function GetAsync(...)
-	repeat until OpenGetRequests <= 0 or not wait()
-	
-	local Success,Data = pcall(HttpService.GetAsync,HttpService,...)
-	
+
+local function GetAsync(...)
+	repeat until OpenGetRequests == 0 or not wait()
+	local Success, Data = pcall(HttpService.GetAsync, HttpService, ...)
+
 	if Success then
 		return Data
-	elseif string.find(Data,"HTTP 429",1,true) or string.find(Data,"Number of requests exceeded limit",1,true) then
-		warn("EMI:Too many requests!")
-		
+	elseif Data:find("HTTP 429", 1, true) or Data:find("Number of requests exceeded limit", 1, true) then
 		wait(math.random(5))
-		
+		warn("Too many requests")
 		return GetAsync(...)
-	elseif string.find(Data,"Http requests are not enabled",1,true) then
+	elseif Data:find("Http requests are not enabled", 1, true) then
 		OpenGetRequests = OpenGetRequests + 1
-		
 		repeat
-			warn("EMI:Http requests are not enabled!")
-			Success,Data = pcall(HttpService.GetAsync,HttpService,...)
-		until Success and not string.find(Data,"Http requests are not enabled",1,true) or not wait(1)
-		
+			local Success, Data = pcall(HttpService.GetAsync, HttpService, ...)
+		until Success and not Data:find("Http requests are not enabled", 1, true) or not wait(1)
 		OpenGetRequests = 0
-		
 		return GetAsync(...)
-	elseif string.find(Data,"HTTP 503",1,true) then
-		warn("EMI:"..Data.." "..(...))
-		
+	elseif Data:find("HTTP 503", 1, true) then
+		warn(Data, (...))
 		return ""
-	elseif string.find(Data,"HttpError: SslConnectFail",1,true) then
-		local Time = math.random(2,5)
-		
-		wait("EMI:SslConnectFail error on '".. tostring((...)) .."', trying again in "..Time.." seconds!")
-		
-		wait(Time)
-		
+	elseif Data:find("HttpError: SslConnectFail", 1, true) then
+		local t = math.random(2, 5)
+		warn("HttpError: SslConnectFail error on " .. tostring((...)) .. " trying again in " .. t .. " seconds.")
+		wait(t)
 		return GetAsync(...)
 	else
-		error("EMI:"..Data.." "..(...),0)
+		error(Data .. (...), 0)
 	end
 end
 
-function SetScriptSourceToLink(Link,Script)
+local function GiveSourceToScript(Link, Script)
 	DataSources[Script] = Link
 	Script.Source = GetAsync(Link)
 end
 
-function InstallRepository(Link,Directory,Parent,Routines,TypesSpecified)
+local function InstallRepo(Link, Directory, Parent, Routines, TypesSpecified)
 	local Value = #Routines + 1
 	Routines[Value] = false
-	
 	local MainExists
-	
+
 	local ScriptCount = 0
 	local Scripts = {}
-	
+
 	local FolderCount = 0
 	local Folders = {}
-	
+
 	local Data = GetAsync(Link)
 	local ShouldSkip = false
-	
-	local _,StatsGraph = string.find(Data,"d-flex repository-lang-stats-graph",1,true)
-	
+	local _, StatsGraph = Data:find("d-flex repository-lang-stats-graph", 1, true)
+
 	if StatsGraph then
-		ShouldSkip = string.find(string.sub(Data,StatsGraph + 1,(string.find(Data,"</div>",StatsGraph,true) or 0/0) - 1),"%ALua%A") == nil
+		ShouldSkip = Data:sub(StatsGraph + 1, (Data:find("</div>", StatsGraph, true) or 0 / 0) - 1):find("%ALua%A") == nil
 	end
-	
+
 	if not ShouldSkip then
-		for Link in string.gmatch(Data,"<span class=\"css%-truncate css%-truncate%-target d%-block width%-fit\"><a class=\"js%-navigation%-open link%-gray%-dark\" title=\"[^\"]+\" %s*href=\"([^\"]+)\".-</span>") do
-			if string.find(Link,"/[^/]+/[^/]+/tree") then
+		for Link in Data:gmatch("<span class=\"css%-truncate css%-truncate%-target d%-block width%-fit\"><a class=\"js%-navigation%-open link%-gray%-dark\" title=\"[^\"]+\" %s*href=\"([^\"]+)\".-</span>") do
+			if Link:find("/[^/]+/[^/]+/tree") then
 				FolderCount = FolderCount + 1
 				Folders[FolderCount] = Link
-			elseif string.find(Link,"/[^/]+/[^/]+/blob.+%.lua$") then
-				local ScriptName,ScriptClass = string.match(Link,"([%w-_%%]+)%.?(%l*)%.lua$")
-				local NameLower = string.lower(ScriptName)
-				
-				if NameLower ~= "install" and NameLower ~= "spec" and ScriptClass ~= "ignore" and ScriptClass ~= "spec" then
+			elseif Link:find("/[^/]+/[^/]+/blob.+%.lua$") then
+				local ScriptName, ScriptClass = Link:match("([%w-_%%]+)%.?(%l*)%.lua$")
+
+				if ScriptName:lower() ~= "install" and ScriptClass ~= "ignore" and ScriptClass ~= "spec" and ScriptName:lower() ~= "spec" then
 					if ScriptClass == "mod" or ScriptClass == "module" then TypesSpecified = true end
-					
-					ScriptCount = ScriptCount + 1
-					if ScriptName == "_" or ScriptName == "main" or NameLower == "init" then
-						for Index = ScriptCount,2,-1 do
-							Scripts[Index] = Scripts[Index - 1]
+
+					if ScriptName == "_" or ScriptName:lower() == "main" or ScriptName:lower() == "init" then
+						ScriptCount = ScriptCount + 1
+						for a = ScriptCount, 2, -1 do
+							Scripts[a] = Scripts[a - 1]
 						end
-						
 						Scripts[1] = Link
 						MainExists = true
 					else
+						ScriptCount = ScriptCount + 1
 						Scripts[ScriptCount] = Link
 					end
 				end
 			end
 		end
 	end
-	
+
 	if ScriptCount > 0 then
 		local ScriptLink = Scripts[1]
-		local ScriptName,ScriptClass = string.match(ScriptLink,"([%w-_%%]+)%.?(%l*)%.lua$")
-		ScriptName = string.gsub(string.gsub(ScriptName,"Library$","",1),"%%(%x%x)",UrlDecode)
-		
-		local Sub = string.sub(Link,19)
-		local Link = string.gsub(Sub,"^(/[^/]+/[^/]+)/tree/[^/]+","%1",1)
-		
-		local LastFolder = string.match(Link,"[^/]+$")
-		LastFolder = string.match(LastFolder,"^RBX%-(.-)%-Library$") or LastFolder
-		
+		local ScriptName, ScriptClass = ScriptLink:match("([%w-_%%]+)%.?(%l*)%.lua$")
+		ScriptName = ScriptName:gsub("Library$", "", 1):gsub("%%(%x%x)", UrlDecode)
+		local Sub = Link:sub(19)
+		local Link = Sub:gsub("^(/[^/]+/[^/]+)/tree/[^/]+", "%1", 1)
+		local LastFolder = Link:match("[^/]+$")
+		LastFolder = LastFolder:match("^RBX%-(.-)%-Library$") or LastFolder
+
 		if MainExists then
-			local Directory = string.gsub(LastFolder,"%%(%x%x)",UrlDecode)
-			ScriptName,ScriptClass = string.match(Directory,"([%w-_%%]+)%.?(%l*)%.lua$")
-			
-			if not ScriptName then ScriptName = string.match(Directory,"^RBX%-(.-)%-Library$") or Directory end
+			local Directory = LastFolder:gsub("%%(%x%x)", UrlDecode)
+			ScriptName, ScriptClass = Directory:match("([%w-_%%]+)%.?(%l*)%.lua$")
+			if not ScriptName then ScriptName = Directory:match("^RBX%-(.-)%-Library$") or Directory end
 			if ScriptClass == "mod" or ScriptClass == "module" then TypesSpecified = true end
 		end
-		
-		if MainExists then Directory = Directory + 2 end
-		
+
+		-- if MainExists or ScriptCount ~= 1 or ScriptName ~= (LastFolder:match("^RBX%-(.-)%-Library$") or LastFolder) then
+		if MainExists then Directory = Directory + 2 end -- :gsub("[^/]+$", "", 1) end
 		local Count = 0
+
 		local function LocateFolder(FolderName)
 			Count = Count + 1
-			
 			if Count > Directory then
 				Directory = Directory + 1
-				
 				if (Parent and Parent.Name) ~= FolderName and "Modules" ~= FolderName then
+					-- local Success, Service = pcall(game.GetService, game, FolderName)
+					-- if FolderName ~= "Lighting" and Success and Service then
+					-- 	Parent = Service
+					-- else
 					local Generated
-					Parent,Generated = GetFirstChild(Parent,FolderName,"Folder")
+					Parent, Generated = GetFirstChild(Parent, FolderName, "Folder")
 					if Generated then
 						if not Routines[1] then Routines[1] = Parent end
-						
-						DataSources[Parent] = "https://github.com"..(string.match(Sub,string.rep(("/[^/]+"),Directory > 2 and Directory + 2 or Directory)) or warn("EMI:[1]",Sub,Directory > 1 and Directory + 2 or Directory) or "")
+						DataSources[Parent] = "https://github.com" .. (Sub:match(("/[^/]+"):rep(Directory > 2 and Directory + 2 or Directory)) or warn("[1]", Sub, Directory > 1 and Directory + 2 or Directory) or "")
 					end
+					-- end
 				end
 			end
 		end
-		
-		string.gsub(string.gsub(Link,"[^/]+$",""),"[^/]+", LocateFolder)
-		
+
+		Link:gsub("[^/]+$", ""):gsub("[^/]+", LocateFolder)
+
 		if MainExists or ScriptCount ~= 1 or ScriptName ~= LastFolder then
 			LocateFolder(LastFolder)
 		end
-		
-		local Script = GetFirstChild(Parent,ScriptName,ScriptTypes[ScriptClass or TypesSpecified or "" or "mod"] or "ModuleScript")
+
+		local Script = GetFirstChild(Parent, ScriptName, ScriptTypes[ScriptClass or TypesSpecified and "" or "mod"] or "ModuleScript")
 		if not Routines[1] then Routines[1] = Script end
-		
-		coroutine.resume(coroutine.create(SetScriptSourceToLink),"https://raw.githubusercontent.com".. string.gsub(Link,"(/[^/]+/[^/]+/)blob/","%1",1),Script)
-		
-		if MainExists then Parent = Script end
-		
-		for Index = 2,ScriptCount do
-			local Link = Scripts[Index]
-			local ScriptName,ScriptClass = string.match(Link,"([%w-_%%]+)%.?(%l*)%.lua$")
-			local Script = GetFirstChild(Parent,string.gsub(string.gsub(ScriptName,"Library$","",1),"%%(%x%x)",UrlDecode),ScriptTypes[ScriptClass or TypesSpecified and "" or "mod"] or "ModuleScript")
-			
-			coroutine.resume(coroutine.create(SetScriptSourceToLink),"https://raw.githubusercontent.com".. string.gsub(Link,"(/[^/]+/[^/]+/)blob/","%1",1),Script)
+		coroutine.resume(coroutine.create(GiveSourceToScript), "https://raw.githubusercontent.com" .. ScriptLink:gsub("(/[^/]+/[^/]+/)blob/", "%1", 1), Script)
+
+		if MainExists then
+			Parent = Script
+		end
+
+		for a = 2, ScriptCount do
+			local Link = Scripts[a]
+			local ScriptName, ScriptClass = Link:match("([%w-_%%]+)%.?(%l*)%.lua$")
+			local Script = GetFirstChild(Parent, ScriptName:gsub("Library$", "", 1):gsub("%%(%x%x)", UrlDecode), ScriptTypes[ScriptClass or TypesSpecified and "" or "mod"] or "ModuleScript")
+			coroutine.resume(coroutine.create(GiveSourceToScript), "https://raw.githubusercontent.com" .. Link:gsub("(/[^/]+/[^/]+/)blob/", "%1", 1), Script)
 		end
 	end
-	
-	for Index = 1,FolderCount do
-		local Link = Folders[Index]
-		
-		coroutine.resume(coroutine.create(InstallRepository),"https://github.com"..Link,Directory,Parent,Routines,TypesSpecified)
+
+	for a = 1, FolderCount do
+		local Link = Folders[a]
+		coroutine.resume(coroutine.create(InstallRepo), "https://github.com" .. Link, Directory, Parent, Routines, TypesSpecified)
 	end
-	
+
 	Routines[Value] = true
 end
 
-local GitHub = {}
-function GitHub:Install(Link,Parent,RoutineList)
-	warn("EMI:Installing repository '"..Link.."'.")
-	
-	if string.byte(Link,-1) == 47 then
-		Link = string.sub(Link,1,-2)
+function GitHub:Install(Link, Parent, RoutineList)
+	-- Installs Link into Parent
+
+	if Link:byte(-1) == 47 then --gsub("/$", "")
+		Link = Link:sub(1, -2)
 	end
-	
-	local Organization,Repository,Tree,ScriptName,ScriptClass
-	local Website,Directory = string.match(Link,"^(https://[raw%.]*github[usercontent]*%.com/)(.+)")
-	Organization,Directory = string.match((Directory or Link),"^/?([%w-_%.]+)/?(.*)")
-	Repository,Directory = string.match(Directory,"^([%w-_%.]+)/?(.*)")
-	
+
+	-- Extract Link Data
+	local Organization, Repository, Tree, ScriptName, ScriptClass
+	local Website, Directory = Link:match("^(https://[raw%.]*github[usercontent]*%.com/)(.+)")
+	Organization, Directory = (Directory or Link):match("^/?([%w-_%.]+)/?(.*)")
+	Repository, Directory = Directory:match("^([%w-_%.]+)/?(.*)")
+
 	if Website == "https://raw.githubusercontent.com/" then
 		if Directory then
-			Tree,Directory = string.match(Directory,"^([^/]+)/(.+)")
+			Tree, Directory = Directory:match("^([^/]+)/(.+)")
 			if Directory then
-				ScriptName,ScriptClass = string.match(Directory,"([%w-_%%]+)%.?(%l*)%.lua$")
+				ScriptName, ScriptClass = Directory:match("([%w-_%%]+)%.?(%l*)%.lua$")
 			end
 		end
 	elseif Directory then
-		local A,B = string.find(Directory,"^[tb][rl][eo][eb]/[^/]+")
-		if A and B then
-			Tree,Directory = string.sub(Directory,6,B),string.sub(Directory,B + 1)
-			if Directory and string.find(Link,"blob",1,true) then
-				ScriptName,ScriptClass = string.match(Directory,"([%w-_%%]+)%.?(%l*)%.lua$")
+		local a, b = Directory:find("^[tb][rl][eo][eb]/[^/]+")
+		if a and b then
+			Tree, Directory = Directory:sub(6, b), Directory:sub(b + 1)
+			if Directory == "" then Directory = nil end
+			if Directory and Link:find("blob", 1, true) then
+				ScriptName, ScriptClass = Directory:match("([%w-_%%]+)%.?(%l*)%.lua$")
 			end
 		else
 			Directory = nil
 		end
 	end
-	
-	if ScriptName then
-		local NameLower = string.lower(ScriptName)
-		if ScriptName == "_" or NameLower == "main" or NameLower == "init" then
-			return GitHub:Install("https://github.com/"..Organization.."/"..Repository.."/tree/"..(Tree or "master").."/".. string.gsub(string.gsub(Directory,"/[^/]+$",""),"^/",""),Parent,RoutineList)
-		end
+
+	if ScriptName and (ScriptName == "_" or ScriptName:lower() == "main" or ScriptName:lower() == "init") then
+		return GitHub:Install("https://github.com/" .. Organization .. "/" .. Repository .. "/tree/" .. (Tree or "master") .. "/" .. Directory:gsub("/[^/]+$", ""):gsub("^/", ""), Parent, RoutineList)
 	end
-	
+
 	if not Website then Website = "https://github.com/" end
-	Directory = Directory and (string.gsub("/"..Directory,"^//","/")) or ""
-	
+	Directory = Directory and ("/" .. Directory):gsub("^//", "/") or ""
+
+	-- Threads
 	local Routines = RoutineList or {false}
 	local Value = #Routines + 1
 	Routines[Value] = false
-	
+
 	local Garbage
-	
+
 	if ScriptName then
-		Link = "https://raw.githubusercontent.com/"..Organization.."/"..Repository.."/"..(Tree or "master")..Directory
-		
+		Link = "https://raw.githubusercontent.com/" .. Organization .. "/" .. Repository .. "/" .. (Tree or "master") .. Directory
 		local Source = GetAsync(Link)
-		
-		local Script = GetFirstChild(Parent and not RoutineList and Repository ~= ScriptName and Parent.Name ~= ScriptName and Parent.Name ~= Repository and GetFirstChild(Parent,Repository,"Folder") or Parent,string.gsub(string.gsub(ScriptName,"Library$","",1),"%%(%x%x)",UrlDecode),ScriptTypes[ScriptClass or "mod"] or "ModuleScript")
+		local Script = GetFirstChild(Parent and not RoutineList and Repository ~= ScriptName and Parent.Name ~= ScriptName and Parent.Name ~= Repository and GetFirstChild(Parent, Repository, "Folder") or Parent, ScriptName:gsub("Library$", "", 1):gsub("%%(%x%x)", UrlDecode), ScriptTypes[ScriptClass or "mod"] or "ModuleScript")
 		DataSources[Script] = Link
-		
 		if not Routines[1] then Routines[1] = Script end
-		
 		Script.Source = Source
 	elseif Repository then
-		Link = Website..Organization.."/"..Repository..((Tree or Directory ~= "") and ("/tree/"..(Tree or "master")..Directory) or "")
-		
-		if not Parent then Parent,Garbage = Instance.new("Folder"),true end
-		
-		coroutine.resume(coroutine.create(InstallRepository),Link,1,Parent,Routines)
+		Link = Website .. Organization .. "/" .. Repository .. ((Tree or Directory ~= "") and ("/tree/" .. (Tree or "master") .. Directory) or "")
+		if not Parent then Parent, Garbage = Instance.new("Folder"), true end
+		coroutine.resume(coroutine.create(InstallRepo), Link, 1, Parent, Routines) -- "/" .. Repository .. Directory
 	elseif Organization then
-		Link = Website..Organization
-		
-		local Data = GetAsync(Link .."?tab=repositories")
-		local Object = GetFirstChild(Parent,Organization,"Folder")
-		
+		Link = Website .. Organization
+		local Data = GetAsync(Link .. "?tab=repositories")
+		local Object = GetFirstChild(Parent, Organization, "Folder")
+
 		if not Routines[1] then Routines[1] = Object end
-		
-		for Link,Data in string.gmatch(Data,'href="(/'..Organization..'/[^/]+)" itemprop="name codeRepository"(.-)</div>') do
-			GitHub:Install(Link,Object,Routines)
+
+		for Link, Data in Data:gmatch('href="(/' .. Organization .. '/[^/]+)" itemprop="name codeRepository"(.-)</div>') do
+			--if not Data:find("Forked from", 1, true) and not Link:find("Plugin", 1, true) and not Link:find(".github.io", 1, true) then
+			GitHub:Install(Link, Object, Routines)
+			--end
 		end
 	end
-	
+
 	Routines[Value] = true
-	
+
 	if not RoutineList then
 		repeat
 			local Done = 0
 			local Count = #Routines
-			
-			for Index = 1,Count do
-				if Routines[Index] then
+			for a = 1, Count do
+				if Routines[a] then
 					Done = Done + 1
 				end
 			end
-		until Done >= Count or not wait()
-		
+		until Done == Count or not wait()
 		local Object = Routines[1]
-		
 		if Garbage then
 			Object.Parent = nil
 			Parent:Destroy()
 		end
-		
 		DataSources[Object] = Link
-		
 		return Object
 	end
 end
@@ -334,6 +308,8 @@ local RepositoriesToInstall = {
 local ThreadsDone = table.create(#RepositoriesToInstall,false)
 for Index = 1,#RepositoriesToInstall do
 	coroutine.resume(coroutine.create(function()
+		warn("EMI:Installing repository '"..RepositoriesToInstall[Index][1].."'.")
+		
 		local Installed = GitHub:Install(
 			RepositoriesToInstall[Index][1],
 			RepositoriesToInstall[Index][2]
@@ -368,9 +344,5 @@ repeat
 until Finished
 
 --// End \\--
-
-pcall(function()
-	game:GetService("HttpService").HttpEnabled = HE
-end)
 
 warn("Ew Modules has installed!")
