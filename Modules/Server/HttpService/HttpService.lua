@@ -24,6 +24,7 @@ function Module:GetAsync(...)
 	elseif Data:find("Http requests are not enabled", 1, true) then
 		OpenGetRequests = OpenGetRequests + 1
 		repeat
+			warn("Http requests are not enabled!")
 			local Success, Data = pcall(HttpService.GetAsync, HttpService, ...)
 		until Success and not Data:find("Http requests are not enabled", 1, true) or not wait(1)
 		OpenGetRequests = 0
@@ -35,7 +36,7 @@ function Module:GetAsync(...)
 	elseif Data:find("HttpError: SslConnectFail", 1, true) then
 		local t = math.random(2, 5)
 		
-		warn("HttpError: SslConnectFail error on "..tostring((...)).." trying again in "..t.." seconds.")
+		warn("HttpError: SslConnectFail error on " .. tostring((...)) .. " trying again in " .. t .. " seconds.")
 		
 		wait(t)
 		
