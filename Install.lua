@@ -327,7 +327,7 @@ for Index = 1,#RepositoriesToInstall do
 			end
 		end
 
-		warn("EMI:Installed repository '"..RepositoriesToInstall[Index][1].."'.\nEMI:"..Compleated.."/"..#RepositoriesToInstall.." repositories installed.")
+		warn("EMI:Installed repository '"..RepositoriesToInstall[Index][1].."'.\t"..Compleated.."/"..#RepositoriesToInstall.." repositories installed.")
 	end))
 end
 
