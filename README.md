@@ -6,5 +6,5 @@ Most of the libraries returns classes and may require advanced Lua knowledge to 
 # Get EwModules
 To install/get EwModules paste this line of code into the command bar in Roblox Studio!
 ```lua
-local a = game:GetService("HttpService");local b = a.HttpEnabled or true;pcall(function() a.HttpEnabled = true end);loadstring(a:GetAsync(""))(b)
+local a = game:GetService("HttpService");local b = a.HttpEnabled or true;pcall(function() a.HttpEnabled = true end);loadstring(a:GetAsync(""))() pcall(function() a.HttpEnabled = b end)
 ```
