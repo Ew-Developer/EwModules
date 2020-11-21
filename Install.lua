@@ -315,7 +315,7 @@ local RepositoriesToInstall = {
 local ThreadsDone = table.create(#RepositoriesToInstall,false)
 for Index = 1,#RepositoriesToInstall do
 	coroutine.resume(coroutine.create(function()
-		warn("EMI:Installing repository '"..RepositoriesToInstall[Index][1].."'.")
+		warn("EMI:Installing file '"..RepositoriesToInstall[Index][1].."'.")
 
 		local Installed = GitHub:Install(
 			RepositoriesToInstall[Index][1],
@@ -334,7 +334,7 @@ for Index = 1,#RepositoriesToInstall do
 			end
 		end
 
-		warn("EMI:Installed repository '"..RepositoriesToInstall[Index][1].."'.\t"..Compleated.."/"..#RepositoriesToInstall.." repositories installed.")
+		warn("EMI:Installed file '"..RepositoriesToInstall[Index][1].."'.\t"..Compleated.."/"..#RepositoriesToInstall.." file installed.")
 	end))
 end
 
