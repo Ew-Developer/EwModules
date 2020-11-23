@@ -4,7 +4,7 @@
 if not game:GetService("RunService"):IsEdit() then error("Ew Modules can only be installed in edit mode!") end
 if not game:GetService("RunService"):IsServer() then error("Ew Modules can only be installed on server!") end]]
 
-local VERSION = "0.0.1"
+local VERSION = "0.0.2"
 warn("Ew Modules v."..VERSION.."\nUsing '"..tostring(_VERSION).."'\nStarting installation...")
 
 --// Installer \\--
