@@ -19,12 +19,12 @@ function GetService(ServiceName,Location)
 			
 			if Server then
 				if Server:FindFirstChild(ServiceName) then
-					return require(Server:FindFirstChild(ServiceName):FindFirstChild(ServiceName) or Server:FindFirstChild(ServiceName):FindFirstChildOfClass("ModuleScript")) or nil
+					return require(Server:FindFirstChild(ServiceName)) or nil
 				end
 			end
 			if Shared then
 				if Shared:FindFirstChild(ServiceName) then
-					return require(Shared:FindFirstChild(ServiceName):FindFirstChild(ServiceName) or Shared:FindFirstChild(ServiceName):FindFirstChildOfClass("ModuleScript")) or nil
+					return require(Shared:FindFirstChild(ServiceName)) or nil
 				end
 			end
 		elseif RunService:IsClient() then
@@ -33,12 +33,12 @@ function GetService(ServiceName,Location)
 
 			if Client then
 				if Client:FindFirstChild(ServiceName) then
-					return require(Client:FindFirstChild(ServiceName):FindFirstChild(ServiceName) or Client:FindFirstChild(ServiceName):FindFirstChildOfClass("ModuleScript")) or nil
+					return require(Client:FindFirstChild(ServiceName)) or nil
 				end
 			end
 			if Shared then
 				if Shared:FindFirstChild(ServiceName) then
-					return require(Shared:FindFirstChild(ServiceName):FindFirstChild(ServiceName) or Shared:FindFirstChild(ServiceName):FindFirstChildOfClass("ModuleScript")) or nil
+					return require(Shared:FindFirstChild(ServiceName)) or nil
 				end
 			end
 		else
