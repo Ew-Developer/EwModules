@@ -10,10 +10,10 @@ function IK.solve(Origin,Target,Len1,Len2)
 	
 	local Axis = Vector3.new(0,0,-1):Cross(LocalizedUnit)
 	local Angle = math.acos(-LocalizedUnit.Z)
-	local Plane = Origin * CFrame.fromAxisAngle(Axis, Angle)
+	local Plane = Origin * CFrame.fromAxisAngle(Axis,Angle)
 	
 	if Len3 < math.max(Len2,Len1) - math.min(Len2,Len1) then
-		return Plane * CFrame.new(0,0, math.max(Len2,Len1) - math.min(Len2,Len1) - Len3), -math.pi/2, math.pi
+		return Plane * CFrame.new(0,0,math.max(Len2,Len1) - math.min(Len2,Len1) - Len3),-math.pi/2,math.pi
 	elseif Len3 > Len1 + Len2 then
 		return Plane * CFrame.new(0,0,Len1 + Len2 - Len3),math.pi/2,0
 	else
